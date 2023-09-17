@@ -21,21 +21,21 @@
                         <Border Height="10"/>
                         <StackPanel Orientation="Horizontal">
                             <TextBlock Text="周 "/>
-                            <TextBox x:Name="TextBox_WeekDay" Width="30" IsReadOnly="True"/>
+                            <TextBox x:Name="TextBox_WeekDay" Width="30" IsReadOnly="True" TextAlignment="Center"/>
                             <Border Width="5"/>
-                            <Button x:Name="Button_1" Content="1" Click="Button_1_Click"/>
+                            <Button x:Name="Button_1" Content="1" Click="Button_1_Click" Width="20"/>
                             <Border Width="5"/>
-                            <Button x:Name="Button_2" Content="2" Click="Button_2_Click"/>
+                            <Button x:Name="Button_2" Content="2" Click="Button_2_Click" Width="20"/>
                             <Border Width="5"/>
-                            <Button x:Name="Button_3" Content="3" Click="Button_3_Click"/>
+                            <Button x:Name="Button_3" Content="3" Click="Button_3_Click" Width="20"/>
                             <Border Width="5"/>
-                            <Button x:Name="Button_4" Content="4" Click="Button_4_Click"/>
+                            <Button x:Name="Button_4" Content="4" Click="Button_4_Click" Width="20"/>
                             <Border Width="5"/>
-                            <Button x:Name="Button_5" Content="5" Click="Button_5_Click"/>
+                            <Button x:Name="Button_5" Content="5" Click="Button_5_Click" Width="20"/>
                             <Border Width="5"/>
-                            <Button x:Name="Button_6" Content="6" Click="Button_6_Click"/>
+                            <Button x:Name="Button_6" Content="6" Click="Button_6_Click" Width="20"/>
                             <Border Width="5"/>
-                            <Button x:Name="Button_7" Content="7" Click="Button_7_Click"/>
+                            <Button x:Name="Button_7" Content="7" Click="Button_7_Click" Width="20"/>
                         </StackPanel>
                         <Border Height="10"/>
                         <StackPanel Orientation="Horizontal">

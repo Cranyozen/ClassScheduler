@@ -83,6 +83,13 @@ internal static class NotifyIconManager
             }
         ));
         contextMenuStrip.Items.Add(BuildItem(
+            "主界面",
+            onClick: (_, _) =>
+            {
+                Instances.MainWindow!.ComplexShow();
+            }
+        ));
+        contextMenuStrip.Items.Add(BuildItem(
             "退出",
             onClick: (_, _) =>
             {

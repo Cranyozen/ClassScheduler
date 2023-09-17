@@ -18,6 +18,8 @@ public class WallPaperSettings
 
     public bool? WallPapersEnabled { get; set; } = false;
 
+    public int PreparationLeadTime { get; set; } = 60;
+
     public WallPaperStyle? WallPaperStyle { get; set; } = Utils.WallPaperStyle.Stretched;
 }
 

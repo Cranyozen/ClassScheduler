@@ -142,11 +142,11 @@ public partial class ScheduleWindow : Window
                 }
             }
             // 打了预备铃
-            else if (now >= (begin - new TimeSpan(0, 2, 0)) && now < begin)
+            else if (now >= (begin - new TimeSpan(0, 0, Instances.AppConfig.WallPaperSettings.PreparationLeadTime)) && now < begin)
             {
                 tb.Foreground = new SolidColorBrush(Color.FromRgb(0x03, 0xFC, 0xA5));
 
-                if ((now - (begin - new TimeSpan(0, 2, 0))).TotalSeconds <= 6)
+                if ((now - (begin - new TimeSpan(0, 0, Instances.AppConfig.WallPaperSettings.PreparationLeadTime))).TotalSeconds <= 6)
                 {
                     Instances.TopmostEffectsWindow!.PlayPrepareClassAlert();
                 }
