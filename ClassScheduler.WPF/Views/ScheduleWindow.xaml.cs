@@ -1,8 +1,13 @@
 ﻿using ClassScheduler.WPF.Utils;
 using ClassScheduler.WPF.Utils.Converter;
 using Microsoft.Web.WebView2.Wpf;
+using Newtonsoft.Json.Linq;
 using System;
+using System.IO;
+using System.IO.Compression;
 using System.Linq;
+using System.Net.Http;
+using System.Threading.Tasks;
 using System.Timers;
 using System.Windows;
 using System.Windows.Controls;
@@ -14,6 +19,8 @@ namespace ClassScheduler.WPF.Views;
 public partial class ScheduleWindow : Window
 {
     private readonly Timer mainTimer;
+    private readonly Timer weatherTimer;
+    private readonly Timer sentenceTimer;
 
     private double? classProgress;
     private bool isPlayingClassOverAnimation = false;
@@ -24,8 +31,6 @@ public partial class ScheduleWindow : Window
         InitializeComponent();
 
         Loaded += ScheduleWindow_Loaded;
-
-        UpdateDatas();
 
         mainTimer = new Timer()
         {
@@ -40,6 +45,14 @@ public partial class ScheduleWindow : Window
             }));
         };
         mainTimer.Start();
+
+        weatherTimer = new Timer() { Interval = 10 * 60 * 1000 };
+        weatherTimer.Elapsed += (_, _) => RefreshWeather();
+        weatherTimer.Start();
+
+        sentenceTimer = new Timer() { Interval = 10 * 60 * 1000 };
+        sentenceTimer.Elapsed += (_, _) => RefreshSentence();
+        sentenceTimer.Start();
     }
 
     private void ScheduleWindow_Loaded(object sender, RoutedEventArgs e)
@@ -58,7 +71,19 @@ public partial class ScheduleWindow : Window
             isPlayingClassOverAnimation = false;
             Container_ClassProgress.Visibility = Visibility.Hidden;
             Container_ClassProgress.Opacity = 1;
+            Container_ClassProgress.Height = 0;
+
+            Seperator_ClassProgress.Height = 0;
         };
+
+        Container_ClassProgress.Height = 0;
+        Seperator_ClassProgress.Height = 0;
+
+        UpdateDatas();
+
+        RefreshWeather();
+
+        RefreshSentence();
     }
 
     public void UpdateDatas()
@@ -78,6 +103,164 @@ public partial class ScheduleWindow : Window
         TextBlock_DaysLeft.Text = Convert.ToInt32((high_school_entrance_day - today).TotalDays).ToString();
 
         RefreshClasses();
+    }
+
+    public void RefreshWeather()
+    {
+        var apiKey = "b111b5b1183443ea9d78b0eefb181cfe";
+
+        var location = "101260216"; // 播州区
+
+        var apiUrl = $"https://devapi.qweather.com/v7/weather/3d?location={location}&key={apiKey}";
+
+        Container_WeatherData.Children.Clear();
+
+        Task.Run(async () =>
+        {
+            try
+            {
+                using var clientHandler = new HttpClientHandler();
+
+                clientHandler.ClientCertificateOptions = ClientCertificateOption.Manual;
+                clientHandler.ServerCertificateCustomValidationCallback =
+                    (sender, cert, chain, sslPolicyErrors) => true;
+
+                using HttpClient client = new(clientHandler);
+
+                var tryCount = 0;
+
+                var response = await client.GetAsync(apiUrl);
+
+                while (tryCount < 3)
+                {
+                    if (response.IsSuccessStatusCode) break;
+                    else
+                    {
+                        ++tryCount;
+                        response = await client.GetAsync(apiUrl);
+                    }
+                }
+
+                if (response.IsSuccessStatusCode)
+                {
+                    var responseStream = await response.Content.ReadAsStreamAsync();
+
+                    using var gzipStream = new GZipStream(responseStream, CompressionMode.Decompress);
+
+                    using var reader = new StreamReader(gzipStream);
+
+                    var responseBody = reader.ReadToEnd();
+
+                    dynamic jsonDoc = JObject.Parse(responseBody);
+
+                    var count = 0;
+
+                    foreach (var today in jsonDoc.daily)
+                    {
+                        ++count;
+                        if (count > 3) break;
+
+                        var fxDate = today.fxDate;
+                        var textDay = today.textDay;
+                        var tempMax = today.tempMax;
+                        var tempMin = today.tempMin;
+                        var windDirDay = today.windDirDay;
+
+                        Dispatcher.Invoke(new(() =>
+                        {
+                            var standard_textBlock = new TextBlock()
+                            {
+                                Foreground = new SolidColorBrush(
+                                        Color.FromArgb(
+                                            (byte)(0xFF - (count - 1) * 0x33),
+                                            0xFF, 0xFF, 0xFF
+                                        )
+                                    ),
+                                FontSize = Math.Floor(28 - count * 2.9),
+                                HorizontalAlignment = HorizontalAlignment.Center,
+                            };
+
+                            try
+                            {
+                                var date = $"{fxDate}";
+                                standard_textBlock.Text = $"{date[5..]} {textDay} {tempMin}-{tempMax}℃ {windDirDay}";
+                            }
+                            catch
+                            {
+                                standard_textBlock.Text = "天气数据解析失败";
+                            }
+
+                            Container_WeatherData.Children.Add(standard_textBlock);
+                        }));
+                    }
+                }
+                else
+                {
+
+                }
+            }
+            catch (Exception ex)
+            {
+                Dispatcher.Invoke(new(() =>
+                {
+                    Container_WeatherData.Children.Add(new TextBlock()
+                    {
+                        Foreground = new SolidColorBrush(Colors.White),
+                        FontSize = 28,
+                        HorizontalAlignment = HorizontalAlignment.Center,
+                        Text = "天气数据获取失败"
+                    });
+                }));
+                Console.WriteLine($"Exception: {ex.Message}");
+            }
+        });
+    }
+
+    public void RefreshSentence()
+    {
+        var apiUrl = "https://v1.hitokoto.cn/?c=d&c=f&encode=text";
+
+        Task.Run(async () =>
+        {
+            try
+            {
+                using var clientHandler = new HttpClientHandler();
+
+                clientHandler.ClientCertificateOptions = ClientCertificateOption.Manual;
+                clientHandler.ServerCertificateCustomValidationCallback =
+                    (sender, cert, chain, sslPolicyErrors) => true;
+
+                using HttpClient client = new(clientHandler);
+
+                var tryCount = 0;
+
+                var response = await client.GetAsync(apiUrl);
+
+                while (tryCount < 3)
+                {
+                    if (response.IsSuccessStatusCode) break;
+                    else
+                    {
+                        ++tryCount;
+                        response = await client.GetAsync(apiUrl);
+                    }
+                }
+
+                if (response.IsSuccessStatusCode)
+                {
+                    var responseBody = await response.Content.ReadAsStringAsync();
+
+                    Dispatcher.Invoke(new(() =>
+                    {
+                        TextBlock_Sentence.Text = $"{responseBody}";
+                    }));
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Exception: {ex.Message}");
+            }
+        });
     }
 
     private void RefreshClasses()
@@ -163,9 +346,14 @@ public partial class ScheduleWindow : Window
         if (isPlayingClassOverAnimation == false && classProgress is null)
         {
             Container_ClassProgress.Visibility = Visibility.Hidden;
+            Container_ClassProgress.Height = 0;
+            Seperator_ClassProgress.Height = 0;
         }
         else
         {
+            Seperator_ClassProgress.Height = 20;
+
+            Container_ClassProgress.Height = Double.NaN;
             Container_ClassProgress.Opacity = 1;
             Container_ClassProgress.Visibility = Visibility.Visible;
             TextBlock_ClassesProgress.Text = $"{classProgress:f2} %";
@@ -238,6 +426,9 @@ public partial class ScheduleWindow : Window
 
     internal void PlayClassOverAnimation()
     {
+        Seperator_ClassProgress.Height = 20;
+
+        Container_ClassProgress.Height = double.NaN;
         Container_ClassProgress.Opacity = 1;
         Container_ClassProgress.Visibility = Visibility.Visible;
 

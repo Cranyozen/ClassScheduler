@@ -108,7 +108,8 @@
                                    FontSize="96"
                                    FontWeight="Bold"
                                    HorizontalAlignment="Center"
-                                   Foreground="White"/>
+                                   Foreground="White"
+                                   FontFamily="Consolas"/>
                         <Border Height="10"/>
                         <StackPanel Orientation="Horizontal"
                                     HorizontalAlignment="Center">
@@ -142,17 +143,17 @@
                         </Border.Effect>
                     </Border>
 
-                    <StackPanel Orientation="Horizontal"
+                    <StackPanel x:Name="Container_DaysLeft" Orientation="Horizontal"
                                 Margin="20">
                         <TextBlock VerticalAlignment="Center"
                                    FontSize="40"
                                    Foreground="White"
                                    FontFamily="Microsoft YaHei"
                                    Text="距高考还有 "/>
-                        <TextBlock x:Name="TextBlock_DaysLeft" VerticalAlignment="Center"
+                        <TextBlock x:Name="TextBlock_DaysLeft" VerticalAlignment="Bottom"
                                    FontSize="40"
                                    FontWeight="Bold"
-                                   FontFamily="Microsoft YaHei"
+                                   FontFamily="Consolas"
                                    Foreground="#FFFF5E5E"
                                    Text="233"/>
                         <TextBlock VerticalAlignment="Center"
@@ -211,7 +212,7 @@
                     </Border>
                 </Grid>
 
-                <Border Height="20"/>
+                <Border x:Name="Seperator_ClassProgress" Height="20"/>
 
                 <Grid x:Name="Container_ClassProgress">
                     <Border Background="Black"
@@ -257,6 +258,34 @@
                             </TextBlock>
                         </Border>
                     </Border>
+                </Grid>
+
+                <Border Height="20"/>
+
+                <Grid>
+                    <Border Background="Black" Opacity="0.3" CornerRadius="15">
+                        <Border.Effect>
+                            <DropShadowEffect Color="Black" Direction="305" ShadowDepth="5" Opacity="0.7" BlurRadius="15"/>
+                        </Border.Effect>
+                    </Border>
+
+                    <StackPanel x:Name="Container_WeatherData" Margin="20" HorizontalAlignment="Center"/>
+                </Grid>
+
+                <Border Height="20"/>
+
+                <Grid>
+                    <Border Background="Black" Opacity="0.3" CornerRadius="15">
+                        <Border.Effect>
+                            <DropShadowEffect Color="Black" Direction="305" ShadowDepth="5" Opacity="0.7" BlurRadius="15"/>
+                        </Border.Effect>
+                    </Border>
+
+                    <TextBlock x:Name="TextBlock_Sentence" Foreground="White" FontSize="32" Margin="20"
+                               MaxWidth="{Binding ActualWidth, ElementName=Container_DaysLeft}"
+                               TextWrapping="Wrap"
+                               TextAlignment="Center"
+                               Text="Fetching sentence data ..." FontFamily="FangSong"/>
                 </Grid>
 
             </StackPanel>
