@@ -10,6 +10,8 @@ public class AppConfig
     public TopmostEffectsSettings TopmostEffectsSettings { get; set; } = new();
 
     public WallPaperSettings WallPaperSettings { get; set; } = new();
+
+    public AppBarConfig AppBarConfig { get; set; } = new();
 }
 
 public class TopmostEffectsSettings
@@ -28,6 +30,21 @@ public class WallPaperSettings
     public int PreparationLeadTime { get; set; } = 60;
 
     public WallPaperStyle? WallPaperStyle { get; set; } = Utils.WallPaperStyle.Stretched;
+}
+
+public class AppBarConfig
+{
+    public bool EnabledAll { get; set; } = true;
+    public bool EnabledShowTime { get; set; } = true;
+    public bool EnabledShowDate { get; set; } = true;
+    public bool EnabledShowWeekDay { get; set; } = true;
+    public bool EnabledShowTimeLeft { get; set; } = true;
+    public bool EnabledShowWeather { get; set; } = true;
+    public string WeatherCityLocID { get; set; } = "101010100";  // 北京
+    public bool ShowWeatherRegularly { get; set; } = false;
+    public String WeatherRegularlyBeginTime { get; set; } = "06:00";
+    public String WeatherRegularlyEndTime { get; set; } = "23:00";
+    public bool EnabledShowSentence { get; set; } = true;
 }
 
 public static class AppConfigExtensions

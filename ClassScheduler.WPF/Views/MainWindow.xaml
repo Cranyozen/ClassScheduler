@@ -10,7 +10,7 @@
         WindowStartupLocation="CenterScreen"
         mc:Ignorable="d">
     <Grid>
-        <TabControl>
+        <TabControl SelectionChanged="TabControl_SelectionChanged">
             <TabItem Header="课表管理">
                 <DockPanel Margin="20">
                     <StackPanel DockPanel.Dock="Top">
@@ -78,6 +78,50 @@
                     <Border Height="10" DockPanel.Dock="Top"/>
                     <ListBox x:Name="ListBox_WallPapers"/>
                 </DockPanel>
+            </TabItem>
+            <TabItem Header="显示设置" x:Name="TabItem_ShowSetting">
+                <StackPanel Margin="20">
+                    <CheckBox x:Name="CheckBox_Enable" Content="启用桌面栏" Margin="0,0,0,10" 
+                              Click="CheckBox_Enable_Click"/>
+                    <CheckBox x:Name="CheckBox_ShowTime" Content="显示时间" Margin="0,0,0,10"
+                              Click="CheckBox_ShowTime_Click"/>
+                    <CheckBox x:Name="CheckBox_ShowDate" Content="显示日期" Margin="0,0,0,10"
+                              Click="CheckBox_ShowDate_Click"/>
+                    <CheckBox x:Name="CheckBox_ShowWeekDay" Content="显示星期" Margin="0,0,0,10"
+                              Click="CheckBox_ShowWeekDay_Click"/>
+                    <CheckBox x:Name="CheckBox_ShowTimeLeft" Content="显示倒计时" Margin="0,0,0,10"
+                              Click="CheckBox_ShowTimeLeft_Click"/>
+                    <CheckBox x:Name="CheckBox_ShowWeather" Content="显示天气" Margin="0,0,0,10"
+                              Click="CheckBox_ShowWeather_Click"/>
+                    <StackPanel Orientation="Vertical" Margin="10,0,0,10">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="天气城市 LocationID: " Margin="0,0,10,0"/>
+                            <TextBox x:Name="TextBox_WeatherCityLocID" Width="150" Margin="0,0,10,0" 
+                                     LostFocus="TextBox_WeatherCityLocID_LostFocus"/>
+                            <TextBlock>
+                                <Hyperlink NavigateUri="https://dev.qweather.com/docs/resource/glossary/#locationid"
+                                           Click="Hyperlink_Click">
+                                    这是什么
+                                </Hyperlink>
+                            </TextBlock>
+                        </StackPanel>
+                        <Border Height="5"/>
+                        <CheckBox x:Name="CheckBox_ShowWeatherRegularly" Content="定时显示"
+                                  Click="CheckBox_ShowWeatherRegularly_Click"/>
+                        <StackPanel Orientation="Horizontal" x:Name="Container_ShowWeatherRegularly">
+                            <DatePickerTextBox x:Name="DatePicker_ShowWeatherRegularly_BeginTime"
+                                               Text="06:00" Width="60" Margin="20,0,0,0"/>
+                            <TextBlock Text="至"/>
+                            <DatePickerTextBox x:Name="DatePicker_ShowWeatherRegularly_EndTime"
+                                               Text="18:00" Width="60"/>
+                            <TextBlock Text="每天" Margin="0,0,10,0"/>
+                            <Button x:Name="Button_SetWeatherRegularlyTime" Content="设置"
+                                    Click="Button_SetWeatherRegularlyTime_Click"/>
+                        </StackPanel>
+                    </StackPanel>
+                    <CheckBox x:Name="CheckBox_ShowSentence" Content="显示每日一句" Margin="0,0,0,10"
+                              Click="CheckBox_ShowSentence_Click"/>
+                </StackPanel>
             </TabItem>
         </TabControl>
     </Grid>

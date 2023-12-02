@@ -25,6 +25,7 @@ public partial class ScheduleWindow : Window
     private double? classProgress;
     private bool isPlayingClassOverAnimation = false;
     private bool isPlayingClassBeginAnimation = false;
+    private DateTime lastUpdatedWeather = DateTime.MinValue;
 
     public ScheduleWindow()
     {
@@ -34,7 +35,7 @@ public partial class ScheduleWindow : Window
 
         mainTimer = new Timer()
         {
-            Interval = 5 * 1000,
+            Interval = 5 * 1000,  // 5 秒更新一次
         };
 
         mainTimer.Elapsed += (_, _) =>
@@ -42,13 +43,16 @@ public partial class ScheduleWindow : Window
             Dispatcher.Invoke(new(() =>
             {
                 UpdateDatas();
+                RefreshWeatherShow();
             }));
         };
         mainTimer.Start();
 
+        /*
         weatherTimer = new Timer() { Interval = 10 * 60 * 1000 };
         weatherTimer.Elapsed += (_, _) => RefreshWeather();
         weatherTimer.Start();
+        */
 
         sentenceTimer = new Timer() { Interval = 10 * 60 * 1000 };
         sentenceTimer.Elapsed += (_, _) => RefreshSentence();
@@ -57,6 +61,8 @@ public partial class ScheduleWindow : Window
 
     private void ScheduleWindow_Loaded(object sender, RoutedEventArgs e)
     {
+        RefreshWindowShow();
+
         this.MoveToBottom();
         this.SetBottom();
 
@@ -81,7 +87,7 @@ public partial class ScheduleWindow : Window
 
         UpdateDatas();
 
-        RefreshWeather();
+        RefreshWeatherShow();
 
         RefreshSentence();
     }
@@ -107,9 +113,11 @@ public partial class ScheduleWindow : Window
 
     public void RefreshWeather()
     {
+        if (DateTime.Now - lastUpdatedWeather < new TimeSpan(0, 5, 0)) return;  // 5 分钟更新一次
+
         var apiKey = "b111b5b1183443ea9d78b0eefb181cfe";
 
-        var location = "101260216"; // 播州区
+        var location = Instances.AppConfig!.AppBarConfig.WeatherCityLocID;
 
         var apiUrl = $"https://devapi.qweather.com/v7/weather/3d?location={location}&key={apiKey}";
 
@@ -143,6 +151,8 @@ public partial class ScheduleWindow : Window
 
                 if (response.IsSuccessStatusCode)
                 {
+                    lastUpdatedWeather = DateTime.Now;
+
                     var responseStream = await response.Content.ReadAsStreamAsync();
 
                     using var gzipStream = new GZipStream(responseStream, CompressionMode.Decompress);
@@ -216,9 +226,55 @@ public partial class ScheduleWindow : Window
         });
     }
 
+    public void RefreshWeatherShow()
+    {
+        RefreshWeather();
+        var nowTime = DateTime.Now;
+        try
+        {
+            var beginTime = DateTime.Parse(Instances.AppConfig!.AppBarConfig.WeatherRegularlyBeginTime);
+            var endTime = DateTime.Parse(Instances.AppConfig!.AppBarConfig.WeatherRegularlyEndTime);
+
+            if (Instances.AppConfig!.AppBarConfig.EnabledShowWeather)
+            {
+                // 允许显示天气
+                if (Instances.AppConfig!.AppBarConfig.ShowWeatherRegularly)
+                {
+                    // 允许定时显示天气
+                    if (nowTime >= beginTime && nowTime <= endTime)
+                    {
+                        Container_WeatherData.Visibility = Visibility.Visible;
+                        Border_Weather.Visibility = Visibility.Visible;
+                    }
+                    else
+                    {
+                        Container_WeatherData.Visibility = Visibility.Collapsed;
+                        Border_Weather.Visibility = Visibility.Collapsed;
+                    }
+                }
+                else
+                {
+                    // 不允许定时显示天气
+                    Container_WeatherData.Visibility = Visibility.Visible;
+                    Border_Weather.Visibility = Visibility.Visible;
+                }
+            }
+            else
+            {
+                // 不允许显示天气
+                Container_WeatherData.Visibility = Visibility.Collapsed;
+                Border_Weather.Visibility = Visibility.Collapsed;
+            }
+        }
+        catch
+        {
+            // TODO
+        }
+    }
+
     public void RefreshSentence()
     {
-        var apiUrl = "https://v1.hitokoto.cn/?c=d&c=f&encode=text";
+        var apiUrl = "https://v1.hitokoto.cn/?c=d&c=i&encode=text";  // d: 文学  i: 诗词
 
         Task.Run(async () =>
         {
@@ -434,5 +490,80 @@ public partial class ScheduleWindow : Window
 
         isPlayingClassOverAnimation = true;
         (Resources["Storyboard_ClassOver"] as Storyboard)?.Begin();
+    }
+
+    public void RefreshWindowShow()
+    {
+        if (Instances.AppConfig!.AppBarConfig.EnabledAll)
+            Panel_AppBar.Visibility = Visibility.Visible;
+        else
+            Panel_AppBar.Visibility = Visibility.Collapsed;
+
+        if (Instances.AppConfig!.AppBarConfig.EnabledShowTime)
+        {
+            TextBlock_Time.Visibility = Visibility.Visible;
+            Border_Time.Visibility = Visibility.Visible;
+        }
+        else
+        {
+            TextBlock_Time.Visibility = Visibility.Collapsed;
+            Border_Time.Visibility = Visibility.Collapsed;
+        }
+
+        if (Instances.AppConfig!.AppBarConfig.EnabledShowDate)
+        {
+            TextBlock_Date.Visibility = Visibility.Visible;
+            Border_Date.Visibility = Visibility.Visible;
+        }
+        else
+        {
+            TextBlock_Date.Visibility = Visibility.Collapsed;
+            Border_Date.Visibility = Visibility.Collapsed;
+        }
+
+        if (Instances.AppConfig!.AppBarConfig.EnabledShowWeekDay)
+            TextBlock_WeekDay.Visibility = Visibility.Visible;
+        else
+            TextBlock_WeekDay.Visibility = Visibility.Collapsed;
+
+        if (Instances.AppConfig!.AppBarConfig.EnabledShowTime ||
+            Instances.AppConfig!.AppBarConfig.EnabledShowDate ||
+            Instances.AppConfig!.AppBarConfig.EnabledShowWeekDay)
+        {
+            Container_DateTime.Visibility = Visibility.Visible;
+            Border_DateTime.Visibility = Visibility.Visible;
+        }
+        else
+        {
+            Container_DateTime.Visibility = Visibility.Collapsed;
+            Border_DateTime.Visibility = Visibility.Collapsed;
+        }
+
+        if (Instances.AppConfig!.AppBarConfig.EnabledShowTimeLeft)
+        {
+            Container_TimeLeft.Visibility = Visibility.Visible;
+            Border_TimeLeft.Visibility = Visibility.Visible;
+        }
+        else
+        {
+            Container_TimeLeft.Visibility = Visibility.Collapsed;
+            Border_TimeLeft.Visibility = Visibility.Collapsed;
+        }
+
+        if (Instances.AppConfig!.AppBarConfig.EnabledShowWeather)
+        {
+            Container_WeatherData.Visibility = Visibility.Visible;
+            Border_Weather.Visibility = Visibility.Visible;
+        }
+        else
+        {
+            Container_WeatherData.Visibility = Visibility.Collapsed;
+            Border_Weather.Visibility = Visibility.Collapsed;
+        }
+
+        if (Instances.AppConfig!.AppBarConfig.EnabledShowSentence)
+            Container_Sentence.Visibility = Visibility.Visible;
+        else
+            Container_Sentence.Visibility = Visibility.Collapsed;
     }
 }

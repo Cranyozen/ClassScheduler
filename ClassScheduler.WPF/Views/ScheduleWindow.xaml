@@ -87,7 +87,8 @@
 
         <Grid Margin="20">
             <StackPanel HorizontalAlignment="Right"
-                        VerticalAlignment="Top">
+                        VerticalAlignment="Top"
+                        x:Name="Panel_AppBar">
 
                 <Grid x:Name="Container_DateTime">
                     <Border Background="Black"
@@ -110,7 +111,7 @@
                                    HorizontalAlignment="Center"
                                    Foreground="White"
                                    FontFamily="Consolas"/>
-                        <Border Height="10"/>
+                        <Border Height="10" x:Name="Border_Time"/>
                         <StackPanel Orientation="Horizontal"
                                     HorizontalAlignment="Center">
                             <TextBlock x:Name="TextBlock_Date"
@@ -118,7 +119,7 @@
                                        FontSize="36"
                                        HorizontalAlignment="Center"
                                        Foreground="White"/>
-                            <Border Width="20"/>
+                            <Border Width="20" x:Name="Border_Date"/>
                             <TextBlock x:Name="TextBlock_WeekDay"
                                        Text="星期一"
                                        FontSize="36"
@@ -128,9 +129,9 @@
                     </StackPanel>
                 </Grid>
 
-                <Border Height="20"/>
+                <Border Height="20" x:Name="Border_DateTime"/>
 
-                <Grid>
+                <Grid x:Name="Container_TimeLeft">
                     <Border Background="Black"
                             Opacity="0.3"
                             CornerRadius="15">
@@ -164,7 +165,7 @@
                     </StackPanel>
                 </Grid>
 
-                <Border Height="20"/>
+                <Border Height="20" x:Name="Border_TimeLeft"/>
 
                 <Grid x:Name="Container_Classes">
                     <Border Background="Black"
@@ -262,7 +263,7 @@
 
                 <Border Height="20"/>
 
-                <Grid>
+                <Grid x:Name="Container_Weather">
                     <Border Background="Black" Opacity="0.3" CornerRadius="15">
                         <Border.Effect>
                             <DropShadowEffect Color="Black" Direction="305" ShadowDepth="5" Opacity="0.7" BlurRadius="15"/>
@@ -272,9 +273,9 @@
                     <StackPanel x:Name="Container_WeatherData" Margin="20" HorizontalAlignment="Center"/>
                 </Grid>
 
-                <Border Height="20"/>
+                <Border Height="20" x:Name="Border_Weather"/>
 
-                <Grid>
+                <Grid x:Name="Container_Sentence">
                     <Border Background="Black" Opacity="0.3" CornerRadius="15">
                         <Border.Effect>
                             <DropShadowEffect Color="Black" Direction="305" ShadowDepth="5" Opacity="0.7" BlurRadius="15"/>
