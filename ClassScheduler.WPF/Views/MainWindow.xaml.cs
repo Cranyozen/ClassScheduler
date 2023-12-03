@@ -5,6 +5,7 @@ using System;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
+using System.Text.RegularExpressions;
 using System.Timers;
 using System.Windows;
 using System.Windows.Controls;
@@ -19,6 +20,12 @@ public partial class MainWindow : Window
     private readonly Timer wallPaperTimer;
 
     public ScheduleWindow? deskWindow = null;
+
+    private readonly string appName = "ClassScheduler";
+
+    private readonly string registryPath = "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run";
+
+    private int tempDayOffset = 0;
 
     public MainWindow()
     {
@@ -66,12 +73,17 @@ public partial class MainWindow : Window
 
         RefreshCurrentWallpaperStyle();
 
+        RefreshAppBarConfig();
+
+        RefreshAppConfig();
+
         NextWallPaper();
     }
 
     public void ComplexShow()
     {
         Show();
+        Activate();  // 移到最前
         ShowInTaskbar = true;
     }
 
@@ -410,26 +422,23 @@ public partial class MainWindow : Window
         }
     }
 
-    private void TabControl_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    private void RefreshAppBarConfig()
     {
-        if ((sender as TabControl).SelectedIndex == 2)
-        {
-            CheckBox_Enable.IsChecked = Instances.AppConfig!.AppBarConfig.EnabledAll;
-            CheckBox_ShowTime.IsChecked = Instances.AppConfig!.AppBarConfig.EnabledShowTime;
-            CheckBox_ShowDate.IsChecked = Instances.AppConfig!.AppBarConfig.EnabledShowDate;
-            CheckBox_ShowWeekDay.IsChecked = Instances.AppConfig!.AppBarConfig.EnabledShowWeekDay;
-            CheckBox_ShowTimeLeft.IsChecked = Instances.AppConfig!.AppBarConfig.EnabledShowTimeLeft;
-            CheckBox_ShowWeather.IsChecked = Instances.AppConfig!.AppBarConfig.EnabledShowWeather;
-            CheckBox_ShowWeatherRegularly.IsChecked = Instances.AppConfig!.AppBarConfig.ShowWeatherRegularly;
-            if (CheckBox_ShowWeatherRegularly.IsChecked == true)
-                Container_ShowWeatherRegularly.Visibility = Visibility.Visible;
-            else
-                Container_ShowWeatherRegularly.Visibility = Visibility.Collapsed;
-            DatePicker_ShowWeatherRegularly_BeginTime.Text = Instances.AppConfig!.AppBarConfig.WeatherRegularlyBeginTime;
-            DatePicker_ShowWeatherRegularly_EndTime.Text = Instances.AppConfig!.AppBarConfig.WeatherRegularlyEndTime;
-            TextBox_WeatherCityLocID.Text = Instances.AppConfig!.AppBarConfig.WeatherCityLocID;
-            CheckBox_ShowSentence.IsChecked = Instances.AppConfig!.AppBarConfig.EnabledShowSentence;
-        }
+        CheckBox_Enable.IsChecked = Instances.AppConfig!.AppBarConfig.EnabledAll;
+        CheckBox_ShowTime.IsChecked = Instances.AppConfig!.AppBarConfig.EnabledShowTime;
+        CheckBox_ShowDate.IsChecked = Instances.AppConfig!.AppBarConfig.EnabledShowDate;
+        CheckBox_ShowWeekDay.IsChecked = Instances.AppConfig!.AppBarConfig.EnabledShowWeekDay;
+        CheckBox_ShowTimeLeft.IsChecked = Instances.AppConfig!.AppBarConfig.EnabledShowTimeLeft;
+        CheckBox_ShowWeather.IsChecked = Instances.AppConfig!.AppBarConfig.EnabledShowWeather;
+        CheckBox_ShowWeatherRegularly.IsChecked = Instances.AppConfig!.AppBarConfig.ShowWeatherRegularly;
+        if (CheckBox_ShowWeatherRegularly.IsChecked == true)
+            Container_ShowWeatherRegularly.Visibility = Visibility.Visible;
+        else
+            Container_ShowWeatherRegularly.Visibility = Visibility.Collapsed;
+        DatePicker_ShowWeatherRegularly_BeginTime.Text = Instances.AppConfig!.AppBarConfig.WeatherRegularlyBeginTime;
+        DatePicker_ShowWeatherRegularly_EndTime.Text = Instances.AppConfig!.AppBarConfig.WeatherRegularlyEndTime;
+        TextBox_WeatherCityLocID.Text = Instances.AppConfig!.AppBarConfig.WeatherCityLocID;
+        CheckBox_ShowSentence.IsChecked = Instances.AppConfig!.AppBarConfig.EnabledShowSentence;
     }
 
     private void Hyperlink_Click(object sender, RoutedEventArgs e)
@@ -473,5 +482,92 @@ public partial class MainWindow : Window
         Instances.AppConfig!.AppBarConfig.WeatherRegularlyEndTime = DatePicker_ShowWeatherRegularly_EndTime.Text;
         Instances.AppConfig!.Save();
         Instances.ScheduleWindow!.RefreshWeatherShow();
+    }
+
+    private void RegisterSelfStart()
+    {
+        var key = Microsoft.Win32.Registry.CurrentUser.OpenSubKey(registryPath, true);
+        key.SetValue(appName, Process.GetCurrentProcess().MainModule.FileName);
+    }
+
+    private void UnregisterSelfStart()
+    {
+        var key = Microsoft.Win32.Registry.CurrentUser.OpenSubKey(registryPath, true);
+        key.DeleteValue(appName, false);
+    }
+
+    private void CheckBox_EnableSelfStart_Click(object sender, RoutedEventArgs e)
+    {
+        if (CheckBox_EnableSelfStart.IsChecked == true)
+            RegisterSelfStart();
+        else
+            UnregisterSelfStart();
+    }
+    private void TextBox_Number_PreviewTextInput(object sender, System.Windows.Input.TextCompositionEventArgs e)
+    {
+        // 仅允许输入数字
+        var textBox = sender as TextBox;
+        e.Handled = !(new Regex("^-?(|0|[1-9][0-9]*)$").IsMatch(textBox.Text.Insert(textBox.CaretIndex, e.Text)));
+    }
+
+    private TimeSpan setTimeOffsetSpan()
+    {
+        var ts = new TimeSpan();
+        ts += TimeSpan.FromDays(tempDayOffset);
+        ts += TimeSpan.FromSeconds(Instances.AppConfig!.AppSettings.TimeOffset);
+        // Instances.ScheduleWindow?.timeOffset = ts;
+        if (Instances.ScheduleWindow?.timeOffset is not null)
+            Instances.ScheduleWindow.timeOffset = ts;
+        return ts;
+    }
+
+    private void TextBox_TimeOffset_TextChanged(object sender, TextChangedEventArgs e)
+    {
+        if (TextBox_TimeOffset.Text == "") return;
+        if (TextBox_TimeOffset.Text == "-") return;
+        Instances.AppConfig!.AppSettings.TimeOffset = int.Parse(TextBox_TimeOffset.Text);
+        Instances.AppConfig!.Save();
+        RefreshChangedTime(setTimeOffsetSpan());
+    }
+
+
+    private void PreparationLeadTime_TextChanged(object sender, TextChangedEventArgs e)
+    {
+        if (TextBox_PreparationLeadTime.Text == "") return;
+        if (TextBox_PreparationLeadTime.Text == "-") return;
+        Instances.AppConfig!.AppSettings.PreparationLeadTime = int.Parse(TextBox_PreparationLeadTime.Text);
+        Instances.AppConfig!.Save();
+    }
+
+    private void TextBox_TempDayOffset_TextChanged(object sender, TextChangedEventArgs e)
+    {
+        if (TextBox_TempDayOffset.Text == "") return;
+        if (TextBox_TempDayOffset.Text == "-") return;
+        tempDayOffset = int.Parse(TextBox_TempDayOffset.Text);
+        RefreshChangedTime(setTimeOffsetSpan());
+    }
+
+    private void RefreshChangedTime(TimeSpan ts)
+    {
+        var changedTime = DateTime.Now + ts;
+        TextBlock_PreviewTime.Text = changedTime.ToString("预计为：MM月dd日 HH:mm ddd");
+    }
+
+    private void RefreshAppConfig()
+    {
+        TextBox_TimeOffset.Text = Instances.AppConfig!.AppSettings.TimeOffset.ToString();
+        TextBox_PreparationLeadTime.Text = Instances.AppConfig!.AppSettings.PreparationLeadTime.ToString();
+        TextBox_TempDayOffset.Text = "0";
+        if (Microsoft.Win32.Registry.CurrentUser.OpenSubKey(registryPath)!.GetValue(appName) == null)
+            CheckBox_EnableSelfStart.IsChecked = false;
+        else
+            CheckBox_EnableSelfStart.IsChecked = true;
+        DatePicker_CountdownDay.SelectedDate = DateTime.Parse(Instances.AppConfig!.AppSettings.CountdownTime);
+    }
+
+    private void DatePicker_CountdownDay_CalendarClosed(object sender, RoutedEventArgs e)
+    {
+        Instances.AppConfig!.AppSettings.CountdownTime = DatePicker_CountdownDay.SelectedDate!.Value.ToString("yyyy.MM.dd");
+        Instances.AppConfig!.Save();
     }
 }

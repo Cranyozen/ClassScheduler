@@ -26,6 +26,7 @@ public partial class ScheduleWindow : Window
     private bool isPlayingClassOverAnimation = false;
     private bool isPlayingClassBeginAnimation = false;
     private DateTime lastUpdatedWeather = DateTime.MinValue;
+    public TimeSpan timeOffset { get; set; } = new(0, 0, 0);
 
     public ScheduleWindow()
     {
@@ -96,17 +97,18 @@ public partial class ScheduleWindow : Window
     {
         var now = DateTime.Now;
         var today = new DateTime(now.Year, now.Month, now.Day);
-        var high_school_entrance_day = new DateTime(now.Year, 6, 6);
+        var countdownDay = DateTime.Parse(Instances.AppConfig!.AppSettings.CountdownTime);
+        // var high_school_entrance_day = new DateTime(now.Year, 6, 6);
 
-        if (high_school_entrance_day < now)
-            high_school_entrance_day = high_school_entrance_day.AddYears(1);
+        // if (high_school_entrance_day < now)
+        //     high_school_entrance_day = high_school_entrance_day.AddYears(1);
 
-        high_school_entrance_day -= high_school_entrance_day.TimeOfDay;
+        // high_school_entrance_day -= high_school_entrance_day.TimeOfDay;
 
         TextBlock_Time.Text = now.ToString("HH:mm");
         TextBlock_Date.Text = now.ToString("MM 月 dd 日");
         TextBlock_WeekDay.Text = now.ToString("dddd");
-        TextBlock_DaysLeft.Text = Convert.ToInt32((high_school_entrance_day - today).TotalDays).ToString();
+        TextBlock_DaysLeft.Text = Convert.ToInt32((countdownDay - today).TotalDays).ToString();
 
         RefreshClasses();
     }
@@ -120,8 +122,6 @@ public partial class ScheduleWindow : Window
         var location = Instances.AppConfig!.AppBarConfig.WeatherCityLocID;
 
         var apiUrl = $"https://devapi.qweather.com/v7/weather/3d?location={location}&key={apiKey}";
-
-        Container_WeatherData.Children.Clear();
 
         Task.Run(async () =>
         {
@@ -164,6 +164,8 @@ public partial class ScheduleWindow : Window
                     dynamic jsonDoc = JObject.Parse(responseBody);
 
                     var count = 0;
+
+                    Dispatcher.Invoke(new(() => Container_WeatherData.Children.Clear()));
 
                     foreach (var today in jsonDoc.daily)
                     {
@@ -331,9 +333,13 @@ public partial class ScheduleWindow : Window
             x => x.EndTime < DateTime.Now && x.DayOfWeek == DateTime.Now.DayOfWeek.ToInt()
         ).Count() * 1.0;
 
+        var preparationLeadTime = new TimeSpan(0, 0, Instances.AppConfig!.AppSettings.PreparationLeadTime);
+
+        DateTime now = DateTime.Now + timeOffset;
+
         foreach (var classModel in Instances.Classes!.ClassesList)
         {
-            if (classModel.DayOfWeek! != DateTime.Now.DayOfWeek.ToInt()) continue;
+            if (classModel.DayOfWeek! != now.DayOfWeek.ToInt()) continue;
 
             var tb = new TextBlock()
             {
@@ -342,27 +348,27 @@ public partial class ScheduleWindow : Window
                 FontSize = 32,
             };
 
-            var now = DateTime.Now;
-            var begin = DateTime.Parse(classModel.BeginTime?.ToString("HH:mm")!);
-            var end = DateTime.Parse(classModel.EndTime?.ToString("HH:mm")!);
+            var nowTime = now.TimeOfDay;
+            var begin = DateTime.Parse(classModel.BeginTime?.ToString("HH:mm")!).TimeOfDay;
+            var end = DateTime.Parse(classModel.EndTime?.ToString("HH:mm")!).TimeOfDay;
 
             // 正在上的课
-            if (now >= begin && now <= end)
+            if (nowTime >= begin && nowTime <= end)
             {
                 inClass = true;
 
-                classProgress = (now - begin).TotalSeconds / (end - begin).TotalSeconds * 100;
+                classProgress = (nowTime - begin).TotalSeconds / (end - begin).TotalSeconds * 100;
 
                 tb.Foreground = new SolidColorBrush(Color.FromRgb(0xFF, 0x5E, 0x5E));
 
-                if ((now - begin).TotalSeconds <= 6 && !isPlayingClassBeginAnimation)
+                if ((nowTime - begin).TotalSeconds <= 6 && !isPlayingClassBeginAnimation)
                 {
                     isPlayingClassBeginAnimation = true;
                     (Resources["Storyboard_ClassBegin"] as Storyboard)!.Begin();
                 }
             }
             // 已完成的课
-            else if (now >= end)
+            else if (nowTime >= end)
             {
                 ++passedClassesIndex;
 
@@ -374,24 +380,24 @@ public partial class ScheduleWindow : Window
                     Color.FromRgb(targetColor, targetColor, targetColor)
                 );
 
-                if ((now - end).TotalSeconds <= 6 && !isPlayingClassOverAnimation)
+                if ((nowTime - end).TotalSeconds <= 6 && !isPlayingClassOverAnimation)
                 {
                     isPlayingClassOverAnimation = true;
                     (Resources["Storyboard_ClassOver"] as Storyboard)?.Begin();
                 }
             }
             // 打了预备铃
-            else if (now >= (begin - new TimeSpan(0, 0, Instances.AppConfig.WallPaperSettings.PreparationLeadTime)) && now < begin)
+            else if (nowTime >= (begin - preparationLeadTime) && nowTime < begin)
             {
                 tb.Foreground = new SolidColorBrush(Color.FromRgb(0x03, 0xFC, 0xA5));
 
-                if ((now - (begin - new TimeSpan(0, 0, Instances.AppConfig.WallPaperSettings.PreparationLeadTime))).TotalSeconds <= 6)
+                if ((nowTime - (begin - preparationLeadTime)).TotalSeconds <= 6)
                 {
                     Instances.TopmostEffectsWindow!.PlayPrepareClassAlert();
                 }
             }
             // 课间, 即将打预备铃
-            else if (now >= (begin - new TimeSpan(0, 10, 0)) && now < begin)
+            else if (nowTime >= (begin - new TimeSpan(0, 10, 0)) && nowTime < begin)
                 tb.Foreground = new SolidColorBrush(Color.FromRgb(0x8C, 0xC6, 0xED));
 
             WrapPanel_ClassesContainer.Children.Add(tb);

@@ -10,7 +10,7 @@
         WindowStartupLocation="CenterScreen"
         mc:Ignorable="d">
     <Grid>
-        <TabControl SelectionChanged="TabControl_SelectionChanged">
+        <TabControl>
             <TabItem Header="课表管理">
                 <DockPanel Margin="20">
                     <StackPanel DockPanel.Dock="Top">
@@ -121,6 +121,43 @@
                     </StackPanel>
                     <CheckBox x:Name="CheckBox_ShowSentence" Content="显示每日一句" Margin="0,0,0,10"
                               Click="CheckBox_ShowSentence_Click"/>
+                </StackPanel>
+            </TabItem>
+            <TabItem Header="程序设置">
+                <StackPanel Margin="20">
+                    <CheckBox x:Name="CheckBox_EnableSelfStart" Content="开机自启动" Margin="0,0,0,10"
+                              Click="CheckBox_EnableSelfStart_Click"/>
+                    <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                        <TextBlock Text="时间偏移" Margin="0,0,5,0"/>
+                        <TextBox x:Name="TextBox_TimeOffset" Text="" Width="50" Margin="0,0,5,0" 
+                                 InputMethod.IsInputMethodEnabled="False"
+                                 PreviewTextInput="TextBox_Number_PreviewTextInput" 
+                                 TextChanged="TextBox_TimeOffset_TextChanged"/>
+                        <TextBlock Text="秒" Margin="0,0,25,0"/>
+                        <TextBlock Text="用于铃声时差的校准" FontStyle="Italic"/>
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                        <TextBlock Text="预备铃提前时间" Margin="0,0,5,0"/>
+                        <TextBox x:Name="TextBox_PreparationLeadTime" Text="" Width="50" Margin="0,0,5,0"
+                                 InputMethod.IsInputMethodEnabled="False"
+                                 PreviewTextInput="TextBox_Number_PreviewTextInput"
+                                 TextChanged="PreparationLeadTime_TextChanged"/>
+                        <TextBlock Text="秒"/>
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                        <TextBlock Text="临时天数偏移" Margin="0,0,5,0"/>
+                        <TextBox x:Name="TextBox_TempDayOffset" Text="" Width="50" Margin="0,0,5,0"
+                                 InputMethod.IsInputMethodEnabled="False"
+                                 PreviewTextInput="TextBox_Number_PreviewTextInput"
+                                 TextChanged="TextBox_TempDayOffset_TextChanged"/>
+                        <TextBlock Text="天" Margin="0,0,10,0"/>
+                        <TextBlock Text="预计为：x月x日 星期x" x:Name="TextBlock_PreviewTime" Margin="0,0,10,0"/>
+                        <TextBlock Text="仅对本次运行有效" FontStyle="Italic"/>
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="倒计时日期" Margin="0,5,10,0"/>
+                        <DatePicker x:Name="DatePicker_CountdownDay" CalendarClosed="DatePicker_CountdownDay_CalendarClosed"/>
+                    </StackPanel>
                 </StackPanel>
             </TabItem>
         </TabControl>
